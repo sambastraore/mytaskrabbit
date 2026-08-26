@@ -1,0 +1,55 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: booking-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports: 
+      - "${MYSQL_EXPOSED_PORT}:${DB_PORT}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  booking-service:
+    image: booking-service
+    container_name: booking-service
+    ports:
+      - "${BOOKING_PORT}:8081"
+    depends_on:
+      - mysql
+
+    volumes:
+      - ${GCP_KEY_PATH}:/app/gcp-key.json:ro
+  
+  mongodb:
+    image: mongo:8
+    container_name: recommendation-mongodb
+    ports:
+      - "${MONGO_PORT}:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  recommendation-service:
+    image: recommendation-service
+    container_name: recommendation-service
+    ports:
+      - "${RECOMMENDATION_PORT}:8082"
+    depends_on:
+      - mongodb
+
+    volumes:
+      - ${GCP_KEY_PATH}:/app/gcp-key.json:ro
+  
+  api-gateway:
+    image: api-gateway
+    container_name: api-gateway
+    ports:
+      - "${GATEWAY_PORT}:8080"
+    depends_on:
+      - booking-service
+      - recommendation-service
+   
+
+volumes:
+  mysql_data:
+  mongo_data:
